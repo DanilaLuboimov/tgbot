@@ -1,23 +1,15 @@
-from loader import bot
-from loader import headers
-from telebot.types import Message
+from .general_request import get_response
 
-import requests
-import json
+import re
 
 
-def get_properties(message: Message) -> dict:
+def get_properties(city_id: str, check_in: str, check_out: str, price_min: str,
+                   price_max: str, user_filter: str, city_name: str,
+                   landmark_ids: str | None = None,
+                   distance_min: float | None = None,
+                   distance_max: float | None = None,
+                   ) -> tuple:
     url = "https://hotels4.p.rapidapi.com/properties/list"
-
-    with bot.retrieve_data(user_id=message.from_user.id,
-                           chat_id=message.chat.id) as data:
-        city_id = data["city_id"]
-        check_in = data["check_in"]
-        check_out = data["check_out"]
-        price_min = data["price_min"]
-        price_max = data["price_max"]
-        user_filter = data["user_filter"]
-
     querystring = {
         "destinationId": city_id,
         "pageNumber": "1",
@@ -33,11 +25,51 @@ def get_properties(message: Message) -> dict:
         "accommodationIds": "12,1"
     }
 
-    response = requests.get(url=url, headers=headers,
-                            params=querystring, timeout=15)
+    # if landmark_ids is not None:
+    #     querystring["landmarkIds"] = landmark_ids
 
-    if response.status_code == requests.codes.ok:
+    hotels_json = get_response(url=url, querystring=querystring)
+    print(hotels_json["data"]["body"]["searchResults"]["results"])
+    hotels_list = list()
+    days_spent = 1
 
-        hotels_j = json.loads(response.text)
+    for i in hotels_json["data"]["body"]["searchResults"]["results"]:
+        if len(i["ratePlan"]["price"]["fullyBundledPricePerStay"]) > 15:
+            stop = re.search(r" ", i["ratePlan"]["price"][
+                                       "fullyBundledPricePerStay"][7::])
+            full_price = i["ratePlan"]["price"]["fullyBundledPricePerStay"][
+                         7:7 + stop.span(0)[0]:]
+            nights = re.search(r"[\d]+", stop.string)
+            days_spent = int(nights[0])
+        else:
+            full_price = i["ratePlan"]["price"]["fullyBundledPricePerStay"][
+                         7::]
 
-    return hotels_j, data
+        city_centre = re.search(r"City Centre", city_name)
+        if city_centre is None:
+            city_centre = \
+                f'До центра города: ' \
+                f'{round(float(i["landmarks"][0]["distance"][:-6:]) / 0.621, 2)} км'
+        else:
+            city_centre = "Отель находится в центральном районе города"
+
+        hotels_list.append([i["name"],
+                            full_price,
+                            str(i["id"]),
+                            i["address"]["streetAddress"],
+                            city_centre,
+                            ])
+
+    print(hotels_list)
+    if landmark_ids is not None:
+        for hotel in hotels_list[:]:
+            distance = re.search(r"\b[\d.]+\b", hotel[4])
+
+            if not distance_min <= float(distance[0]) <= distance_max:
+                hotels_list.remove(hotel)
+
+            if float(price_min) <= float(hotel[1]) / days_spent <= float(
+                    price_max):
+                hotels_list.remove(hotel)
+
+    return hotels_list, days_spent

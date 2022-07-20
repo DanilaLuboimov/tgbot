@@ -1,35 +1,15 @@
 from loader import bot
 from states.user_information import UserInfoState
 from utils.calendar import get_calendar
-from telebot.types import Message, CallbackQuery, InputMediaPhoto
+from telebot.types import Message, CallbackQuery
 from telegram_bot_calendar import DetailedTelegramCalendar, LSTEP
-from re import sub
-from api_request import city, photos, properties
+from api_request import city, photo, properties
 from keyboards.reply.default_keyboard import user_keyboard
 from keyboards.reply.number_of_hotels import number_of_hotels
 from keyboards.reply.one_word_answer import one_word_answer
 from keyboards.reply.number_of_photos import number_of_photos
 from keyboards.inline.hotel_website import hotel_website
 from datetime import date, timedelta, datetime
-
-
-@bot.message_handler(commands=["lowprice"])
-# @ex_wrapper
-def lowprice(message: Message) -> None:
-    bot.delete_state(user_id=message.from_user.id, chat_id=message.chat.id)
-
-    answer = f"В какой <b>город</b> отправляемся?"
-
-    bot.set_state(user_id=message.from_user.id, state=UserInfoState.city_name,
-                  chat_id=message.chat.id)
-    bot.send_message(chat_id=message.chat.id, text=answer, parse_mode="html")
-
-    with bot.retrieve_data(user_id=message.from_user.id,
-                           chat_id=message.chat.id) as data:
-        data["user_id"] = str(message.from_user.id)
-        data["user_filter"] = "PRICE"
-        data["price_min"] = "0"
-        data["price_max"] = "5000"
 
 
 @bot.message_handler(state=UserInfoState.city_name)
@@ -68,7 +48,7 @@ def create_date(message: Message) -> None:
             bot.send_message(chat_id=message.chat.id,
                              text=text,
                              reply_markup=calendar)
-        else:
+        elif message.text.lower() == "да":
             text = "Попробуйте ввести другой город"
 
             bot.set_state(user_id=message.from_user.id,
@@ -76,6 +56,8 @@ def create_date(message: Message) -> None:
                           chat_id=message.chat.id)
             bot.send_message(chat_id=message.chat.id,
                              text=text)
+        else:
+            raise Exception
     except Exception:
         pass
 
@@ -145,15 +127,26 @@ def create_date(call: CallbackQuery) -> None:
 
                 data["check_out"] = str(result)
 
-                answer = f"<b>Сколько отелей показать?</b>"
+                if "price_min" not in data.keys():
+                    answer = "Введите минимальную цену, за ночь в отеле," \
+                             " в долларах"
 
-                bot.set_state(call.from_user.id,
-                              UserInfoState.count_hotels,
-                              call.message.chat.id)
+                    bot.set_state(call.from_user.id,
+                                  UserInfoState.price_min,
+                                  call.message.chat.id)
 
-                bot.send_message(chat_id=call.message.chat.id, text=answer,
-                                 parse_mode='html',
-                                 reply_markup=number_of_hotels())
+                    bot.send_message(chat_id=call.message.chat.id, text=answer,
+                                     parse_mode='html')
+                else:
+                    answer = f"Сколько отелей показать?"
+
+                    bot.set_state(call.from_user.id,
+                                  UserInfoState.count_hotels,
+                                  call.message.chat.id)
+
+                    bot.send_message(chat_id=call.message.chat.id, text=answer,
+                                     parse_mode='html',
+                                     reply_markup=number_of_hotels())
 
 
 @bot.message_handler(state=UserInfoState.count_hotels)
@@ -198,45 +191,65 @@ def print_photo(message: Message) -> None:
 @bot.message_handler(state=UserInfoState.count_photos)
 # @ex_wrapper
 def properties_list(message: Message) -> None:
-    hotels_json, data = properties.get_properties(message=message)
-    hotel_list = list()
+    with bot.retrieve_data(user_id=message.from_user.id,
+                           chat_id=message.chat.id) as data:
+        city_name = data["city_name"]
+        city_id = data["city_id"]
+        check_in = data["check_in"]
+        check_out = data["check_out"]
+        price_min = data["price_min"]
+        price_max = data["price_max"]
+        user_filter = data["user_filter"]
 
-    for i in hotels_json["data"]["body"]["searchResults"]["results"]:
-        hotel_list.append([i["name"],
-                           i["ratePlan"]["price"][
-                               "fullyBundledPricePerStay"][
-                           7::],
-                           str(i["id"]),
-                           i["address"]["streetAddress"],
-                           i["landmarks"][0]["distance"]
-                           ])
+    if data["user_filter"] == "DISTANCE_FROM_LANDMARK":
+        landmark_ids = data["city_id"]
+        distance_min = float(data["distance_min"])
+        distance_max = float(data["distance_max"])
+        hotels_list, days_spent = properties.get_properties(city_id, check_in,
+                                                            check_out,
+                                                            price_min,
+                                                            price_max,
+                                                            user_filter,
+                                                            city_name,
+                                                            landmark_ids,
+                                                            distance_min,
+                                                            distance_max,
+                                                            )
+    else:
+        hotels_list, days_spent = properties.get_properties(city_id, check_in,
+                                                            check_out,
+                                                            price_min,
+                                                            price_max,
+                                                            user_filter,
+                                                            city_name)
 
-    for hotel in hotel_list[:int(data["count_hotels"]):]:
+    for hotel in hotels_list[:int(data["count_hotels"]):]:
         if message.text.isdigit() and int(message.text) in range(1, 7):
             data["count_photos"] = message.text
 
-            photo_json = photos.get_photos(hotel_id=hotel[2])
-            photo_list = list()
-
-            for p in photo_json["hotelImages"][
-                     :int(data["count_photos"]):]:
-                photo = sub(r"{size}", r"z", p["baseUrl"])
-                hotel_photo = InputMediaPhoto(photo)
-                photo_list.append(hotel_photo)
+            photos = photo.get_photos(hotel_id=hotel[2],
+                                      count=int(data["count_photos"]))
 
             bot.send_media_group(chat_id=message.chat.id,
-                                 media=photo_list)
+                                 media=photos)
+
+        if days_spent == 1:
+            nights = "ночь"
+        elif 2 <= days_spent >= 4:
+            nights = "ночи"
+        else:
+            nights = "ночей"
 
         answer = f"Название отеля: {hotel[0]}\n" \
                  f"Адрес: {hotel[3]}\n" \
-                 f"До центра города: {hotel[4]}\n" \
-                 f"Цена: ${hotel[1]}"
+                 f"{hotel[4]}\n" \
+                 f"Цена за {days_spent} {nights}: ${hotel[1]}"
         bot.send_message(chat_id=message.chat.id, text=answer,
                          parse_mode="html",
                          reply_markup=hotel_website(hotel_name=hotel[0],
                                                     hotel_id=hotel[2],
-                                                    check_in=data["check_in"],
-                                                    check_out=data["check_out"]
+                                                    check_in=check_in,
+                                                    check_out=check_out
                                                     )
                          )
 

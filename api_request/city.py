@@ -1,13 +1,8 @@
-from loader import headers
 from deep_translator import GoogleTranslator
-
-import requests
-import json
+from .general_request import get_response
 
 
 def get_city(message_text: str) -> tuple:
-    url = "https://hotels4.p.rapidapi.com/locations/v2/search"
-
     alphabet_ru = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
     name_city = message_text
 
@@ -17,18 +12,14 @@ def get_city(message_text: str) -> tuple:
                 message_text.title())
             break
 
+    url = "https://hotels4.p.rapidapi.com/locations/v2/search"
     querystring = {"query": name_city.lower(), "locale": "en_US",
                    "currency": "USD"}
-    response = requests.get(url=url, headers=headers,
-                            params=querystring, timeout=15)
 
-    if response.status_code == requests.codes.ok:
-        data = json.loads(response.text)
+    data = get_response(url=url, querystring=querystring)
 
-        for i in data["suggestions"]:
-            if len(i["entities"]) > 0:
-                city_id = i["entities"][0]["destinationId"]
-                city_name = i["entities"][0]["name"]
-                break
-
-    return city_id, city_name
+    for i in data["suggestions"]:
+        if len(i["entities"]) > 0:
+            city_id = i["entities"][0]["destinationId"]
+            city_name = i["entities"][0]["name"]
+            return city_id, city_name
