@@ -253,7 +253,10 @@ def properties_list(message: Message) -> None:
                                                     )
                          )
 
-    answer = "Это все, что я могу предложить по вашему запросу"
+    if len(hotels_list) == 0:
+        answer = "К сожалению по вашему запросу не удалось найти отелей"
+    else:
+        answer = "Это все, что я могу предложить по вашему запросу"
 
     bot.send_message(chat_id=message.chat.id, text=answer, parse_mode="html",
                      reply_markup=user_keyboard())

@@ -29,7 +29,7 @@ def get_properties(city_id: str, check_in: str, check_out: str, price_min: str,
     #     querystring["landmarkIds"] = landmark_ids
 
     hotels_json = get_response(url=url, querystring=querystring)
-    print(hotels_json["data"]["body"]["searchResults"]["results"])
+
     hotels_list = list()
     days_spent = 1
 
@@ -60,7 +60,6 @@ def get_properties(city_id: str, check_in: str, check_out: str, price_min: str,
                             city_centre,
                             ])
 
-    print(hotels_list)
     if landmark_ids is not None:
         for hotel in hotels_list[:]:
             distance = re.search(r"\b[\d.]+\b", hotel[4])
