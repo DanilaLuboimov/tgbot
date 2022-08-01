@@ -67,7 +67,7 @@ def get_properties(city_id: str, check_in: str, check_out: str, price_min: str,
 
             if not distance_min <= float(distance[0]) <= distance_max:
                 hotels_list.remove(hotel)
-            elif float(price_min) <= float(hotel[1]) / hotel[5] <= float(
+            elif not float(price_min) <= float(hotel[1]) / hotel[5] <= float(
                     price_max):
                 hotels_list.remove(hotel)
 

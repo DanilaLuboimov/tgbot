@@ -1,15 +1,7 @@
 from loader import bot
 from states.user_information import UserInfoState
-from utils.calendar import get_calendar
-from telebot.types import Message, CallbackQuery
-from telegram_bot_calendar import DetailedTelegramCalendar, LSTEP
-from api_request import city, photo, properties
-from keyboards.reply.default_keyboard import user_keyboard
+from telebot.types import Message
 from keyboards.reply.number_of_hotels import number_of_hotels
-from keyboards.reply.one_word_answer import one_word_answer
-from keyboards.reply.number_of_photos import number_of_photos
-from keyboards.inline.hotel_website import hotel_website
-from datetime import date, timedelta, datetime
 
 
 @bot.message_handler(state=UserInfoState.price_min)

@@ -211,15 +211,15 @@ def properties_list(message: Message) -> None:
         distance_min = float(data["distance_min"])
         distance_max = float(data["distance_max"])
         hotels_list = properties.get_properties(city_id, check_in,
-                                                            check_out,
-                                                            price_min,
-                                                            price_max,
-                                                            user_filter,
-                                                            city_name,
-                                                            landmark_ids,
-                                                            distance_min,
-                                                            distance_max,
-                                                            )
+                                                check_out,
+                                                price_min,
+                                                price_max,
+                                                user_filter,
+                                                city_name,
+                                                landmark_ids,
+                                                distance_min,
+                                                distance_max,
+                                                )
     else:
         hotels_list = properties.get_properties(city_id, check_in,
                                                 check_out,
