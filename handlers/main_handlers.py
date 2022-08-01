@@ -210,7 +210,7 @@ def properties_list(message: Message) -> None:
         landmark_ids = data["city_id"]
         distance_min = float(data["distance_min"])
         distance_max = float(data["distance_max"])
-        hotels_list, days_spent = properties.get_properties(city_id, check_in,
+        hotels_list = properties.get_properties(city_id, check_in,
                                                             check_out,
                                                             price_min,
                                                             price_max,

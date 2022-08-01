@@ -3,11 +3,10 @@ from .connection_to_db import connect
 
 def new_results(search_id: int, hotel_url: None | str = None,
                 hotel_name: str | None = None) -> None:
-    hotel_name = hotel_name.replace("'", "''")
-
     connection = connect()
     with connection.cursor() as cursor:
         if hotel_url is not None:
+            hotel_name = hotel_name.replace("'", "''")
             cursor.execute(
                 f"""
                 INSERT INTO results (hotel_url, fk_search_id, hotel_name)
