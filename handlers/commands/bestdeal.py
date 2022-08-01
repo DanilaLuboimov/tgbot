@@ -15,5 +15,7 @@ def bestdeal(message: types.Message) -> None:
     bot.send_message(chat_id=message.chat.id, text=answer, parse_mode="html")
     with bot.retrieve_data(user_id=message.from_user.id,
                            chat_id=message.chat.id) as data:
-        data["user_id"] = str(message.from_user.id)
+        data["user_id"] = message.from_user.id
         data["user_filter"] = "DISTANCE_FROM_LANDMARK"
+        data["command"] = message.text
+        data["date"] = message.date

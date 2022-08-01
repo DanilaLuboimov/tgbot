@@ -8,6 +8,12 @@ else:
 
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 RAPID_API_KEY = os.getenv('RAPID_API_KEY')
+HOST = os.getenv('HOST')
+USER = os.getenv('USER')
+PASSWORD = os.getenv('PASSWORD')
+DB_NAME = os.getenv('DB_NAME')
+PORT = os.getenv('PORT')
+
 
 # commands
 commands = (

@@ -8,7 +8,7 @@ def get_properties(city_id: str, check_in: str, check_out: str, price_min: str,
                    landmark_ids: str | None = None,
                    distance_min: float | None = None,
                    distance_max: float | None = None,
-                   ) -> tuple:
+                   ) -> dict:
     url = "https://hotels4.p.rapidapi.com/properties/list"
     querystring = {
         "destinationId": city_id,
@@ -25,9 +25,6 @@ def get_properties(city_id: str, check_in: str, check_out: str, price_min: str,
         "accommodationIds": "12,1"
     }
 
-    # if landmark_ids is not None:
-    #     querystring["landmarkIds"] = landmark_ids
-
     hotels_json = get_response(url=url, querystring=querystring)
 
     hotels_list = list()
@@ -39,8 +36,11 @@ def get_properties(city_id: str, check_in: str, check_out: str, price_min: str,
                                        "fullyBundledPricePerStay"][7::])
             full_price = i["ratePlan"]["price"]["fullyBundledPricePerStay"][
                          7:7 + stop.span(0)[0]:]
-            nights = re.search(r"[\d]+", stop.string)
-            days_spent = int(nights[0])
+            nights = re.findall(r"[\d]+", stop.string)
+            if len(nights) == 2:
+                days_spent = int(nights[1])
+            elif len(nights) == 3:
+                days_spent = int(nights[2])
         else:
             full_price = i["ratePlan"]["price"]["fullyBundledPricePerStay"][
                          7::]
@@ -54,10 +54,11 @@ def get_properties(city_id: str, check_in: str, check_out: str, price_min: str,
             city_centre = "Отель находится в центральном районе города"
 
         hotels_list.append([i["name"],
-                            full_price,
+                            full_price.replace(",", "", 1),
                             str(i["id"]),
                             i["address"]["streetAddress"],
                             city_centre,
+                            days_spent
                             ])
 
     if landmark_ids is not None:
@@ -67,8 +68,8 @@ def get_properties(city_id: str, check_in: str, check_out: str, price_min: str,
             if not distance_min <= float(distance[0]) <= distance_max:
                 hotels_list.remove(hotel)
 
-            if float(price_min) <= float(hotel[1]) / days_spent <= float(
+            if float(price_min) <= float(hotel[1]) / hotel[5] <= float(
                     price_max):
                 hotels_list.remove(hotel)
 
-    return hotels_list, days_spent
+    return hotels_list

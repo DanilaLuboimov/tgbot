@@ -16,7 +16,9 @@ def lowprice(message: Message) -> None:
 
     with bot.retrieve_data(user_id=message.from_user.id,
                            chat_id=message.chat.id) as data:
-        data["user_id"] = str(message.from_user.id)
+        data["user_id"] = message.from_user.id
         data["user_filter"] = "PRICE"
         data["price_min"] = "0"
         data["price_max"] = "5000"
+        data["command"] = message.text
+        data["date"] = message.date

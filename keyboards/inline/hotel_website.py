@@ -1,13 +1,15 @@
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
-def hotel_website(hotel_name: str, hotel_id: str, check_in: str,
-                  check_out: str) -> InlineKeyboardMarkup:
+def hotel_website(hotels: list) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
 
-    hotel_site = InlineKeyboardButton(text=hotel_name,
-                                      url=f"https://www.hotels.com/ho{hotel_id}/?q-check-in={check_in}&q-check-out={check_out}&q-rooms=1&q-room-0-adults=1&q-room-0-children=0&f-hotel-id={hotel_id}")
+    for button in hotels:
+        hotel_url = button[0]
+        hotel_name = button[1]
 
-    markup.add(hotel_site)
+        hotel_site = InlineKeyboardButton(text=hotel_name, url=hotel_url)
+
+        markup.add(hotel_site)
 
     return markup

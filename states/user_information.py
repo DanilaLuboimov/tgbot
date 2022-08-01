@@ -15,3 +15,5 @@ class UserInfoState(StatesGroup):
     count_hotels = State()
     distance_min = State()
     distance_max = State()
+    command = State()
+    date = State()

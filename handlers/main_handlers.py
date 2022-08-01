@@ -10,6 +10,8 @@ from keyboards.reply.one_word_answer import one_word_answer
 from keyboards.reply.number_of_photos import number_of_photos
 from keyboards.inline.hotel_website import hotel_website
 from datetime import date, timedelta, datetime
+from database.create_a_new_search_query import new_search_query
+from database.create_new_results import new_results
 
 
 @bot.message_handler(state=UserInfoState.city_name)
@@ -48,7 +50,7 @@ def create_date(message: Message) -> None:
             bot.send_message(chat_id=message.chat.id,
                              text=text,
                              reply_markup=calendar)
-        elif message.text.lower() == "да":
+        elif message.text.lower() == "нет":
             text = "Попробуйте ввести другой город"
 
             bot.set_state(user_id=message.from_user.id,
@@ -191,6 +193,9 @@ def print_photo(message: Message) -> None:
 @bot.message_handler(state=UserInfoState.count_photos)
 # @ex_wrapper
 def properties_list(message: Message) -> None:
+    bot.send_message(chat_id=message.chat.id, text="Начинаю поиск отелей...",
+                     parse_mode='html')
+
     with bot.retrieve_data(user_id=message.from_user.id,
                            chat_id=message.chat.id) as data:
         city_name = data["city_name"]
@@ -216,12 +221,14 @@ def properties_list(message: Message) -> None:
                                                             distance_max,
                                                             )
     else:
-        hotels_list, days_spent = properties.get_properties(city_id, check_in,
-                                                            check_out,
-                                                            price_min,
-                                                            price_max,
-                                                            user_filter,
-                                                            city_name)
+        hotels_list = properties.get_properties(city_id, check_in,
+                                                check_out,
+                                                price_min,
+                                                price_max,
+                                                user_filter,
+                                                city_name)
+
+    db_hotels_result = list()
 
     for hotel in hotels_list[:int(data["count_hotels"]):]:
         if message.text.isdigit() and int(message.text) in range(1, 7):
@@ -233,9 +240,9 @@ def properties_list(message: Message) -> None:
             bot.send_media_group(chat_id=message.chat.id,
                                  media=photos)
 
-        if days_spent == 1:
+        if hotel[5] == 1:
             nights = "ночь"
-        elif 2 <= days_spent >= 4:
+        elif 2 <= hotel[5] >= 4:
             nights = "ночи"
         else:
             nights = "ночей"
@@ -243,24 +250,39 @@ def properties_list(message: Message) -> None:
         answer = f"Название отеля: {hotel[0]}\n" \
                  f"Адрес: {hotel[3]}\n" \
                  f"{hotel[4]}\n" \
-                 f"Цена за {days_spent} {nights}: ${hotel[1]}"
+                 f"Цена за {hotel[5]} {nights}: ${hotel[1]}"
+
+        if nights != "ночь":
+            hotel[1] = hotel[1].replace(",", "", 1)
+            price = round(float(hotel[1]) / hotel[5], 2)
+            if str(price).endswith(".0"):
+                price = str(price)[:-2:]
+            answer += f"\nЦена за ночь: ${price}"
+
+        url = f"https://www.hotels.com/ho{hotel[2]}/?q-check-in={check_in}&q-check-out={check_out}&q-rooms=1&q-room-0-adults=1&q-room-0-children=0&f-hotel-id={hotel[2]}"
+
+        db_hotels_result.append((url, hotel[0]))
+
         bot.send_message(chat_id=message.chat.id, text=answer,
                          parse_mode="html",
-                         reply_markup=hotel_website(hotel_name=hotel[0],
-                                                    hotel_id=hotel[2],
-                                                    check_in=check_in,
-                                                    check_out=check_out
-                                                    )
+                         reply_markup=hotel_website(hotels=[(url, hotel[0])])
                          )
+
+    search_id_from_db = new_search_query(command=data["command"],
+                                         date_time=data["date"],
+                                         fk_user_id=data["user_id"])
 
     if len(hotels_list) == 0:
         answer = "К сожалению по вашему запросу не удалось найти отелей"
+        new_results(search_id=search_id_from_db)
     else:
         answer = "Это все, что я могу предложить по вашему запросу"
 
+        for result in db_hotels_result:
+            new_results(search_id=search_id_from_db,
+                        hotel_url=result[0], hotel_name=result[1])
+
     bot.send_message(chat_id=message.chat.id, text=answer, parse_mode="html",
                      reply_markup=user_keyboard())
-
-    # здесь будет добавлена функция для записи в БД
 
     bot.delete_state(user_id=message.from_user.id, chat_id=message.chat.id)
