@@ -3,9 +3,11 @@ from telebot.types import Message
 from keyboards.reply.default_keyboard import user_keyboard
 from keyboards.inline.hotel_website import hotel_website
 from database.db_history import get_history_result, get_search_query
+from utils.logging import ex_log
 
 
 @bot.message_handler(commands=["history"])
+@ex_log
 def history(message: Message) -> None:
     db_search_list = get_search_query(user_id=message.from_user.id)
 

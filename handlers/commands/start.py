@@ -3,10 +3,11 @@ from telebot.types import Message
 from keyboards.reply.default_keyboard import user_keyboard
 from utils.info import info
 from database.create_a_new_user import new_user
+from utils.logging import ex_log
 
 
 @bot.message_handler(commands=["start"])
-# @ex_wrapper
+@ex_log
 def start(message: Message) -> None:
     if new_user(message.from_user.id):
         answer = f"Привет, {message.from_user.first_name}! " \

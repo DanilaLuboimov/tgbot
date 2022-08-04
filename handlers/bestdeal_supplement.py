@@ -2,9 +2,11 @@ from loader import bot
 from states.user_information import UserInfoState
 from telebot.types import Message
 from keyboards.reply.number_of_hotels import number_of_hotels
+from utils.logging import ex_log
 
 
 @bot.message_handler(state=UserInfoState.price_min)
+@ex_log
 def get_price(message: Message) -> None:
     if message.text.isdigit():
         with bot.retrieve_data(user_id=message.from_user.id,
@@ -33,6 +35,7 @@ def get_price(message: Message) -> None:
 
 
 @bot.message_handler(state=UserInfoState.distance_min)
+@ex_log
 def get_distance(message: Message) -> None:
     if message.text.isdigit():
         with bot.retrieve_data(user_id=message.from_user.id,

@@ -1,10 +1,11 @@
 from loader import bot
 from states.user_information import UserInfoState
 from telebot.types import Message
+from utils.logging import ex_log
 
 
 @bot.message_handler(commands=["highprice"])
-# @ex_wrapper
+@ex_log
 def highprice(message: Message) -> None:
     bot.delete_state(user_id=message.from_user.id, chat_id=message.chat.id)
 

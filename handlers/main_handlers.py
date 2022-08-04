@@ -1,6 +1,7 @@
 from loader import bot
 from states.user_information import UserInfoState
 from utils.calendar import get_calendar
+from utils.logging import ex_log
 from telebot.types import Message, CallbackQuery
 from telegram_bot_calendar import DetailedTelegramCalendar, LSTEP
 from api_request import city, photo, properties
@@ -15,27 +16,36 @@ from database.create_new_results import new_results
 
 
 @bot.message_handler(state=UserInfoState.city_name)
+@ex_log
 def get_city_name(message: Message) -> None:
     bot.send_message(chat_id=message.chat.id, text="Начинаю искать город...",
                      parse_mode="html")
 
-    city_id, city_name = city.get_city(message_text=message.text)
+    try:
+        city_id, city_name = city.get_city(message_text=message.text)
+    except TypeError:
+        bot.send_message(chat_id=message.chat.id,
+                         text=f'Не получилось найти город '
+                              f'<u>"{message.text}"</u>\n'
+                              f'Попробуйте другой',
+                         parse_mode="html")
+    else:
+        with bot.retrieve_data(user_id=message.from_user.id,
+                               chat_id=message.chat.id) as data:
+            data["city_name"] = city_name
+            data["city_id"] = city_id
 
-    with bot.retrieve_data(user_id=message.from_user.id,
-                           chat_id=message.chat.id) as data:
-        data["city_name"] = city_name
-        data["city_id"] = city_id
+            answer = f"Нашел <b><u>{city_name}</u></b> по запросу\n" \
+                     f"Требуется Ваше подтверждение"
 
-        answer = f"Нашел <b><u>{city_name}</u></b> по запросу\n" \
-                 f"Требуется Ваше подтверждение"
-
-        bot.set_state(user_id=message.from_user.id,
-                      state=UserInfoState.check_in)
-        bot.send_message(chat_id=message.chat.id, text=answer,
-                         parse_mode="html", reply_markup=one_word_answer())
+            bot.set_state(user_id=message.from_user.id,
+                          state=UserInfoState.check_in)
+            bot.send_message(chat_id=message.chat.id, text=answer,
+                             parse_mode="html", reply_markup=one_word_answer())
 
 
 @bot.message_handler(state=UserInfoState.check_in)
+@ex_log
 def create_date(message: Message) -> None:
     try:
         if message.text.lower() == "да":
@@ -51,20 +61,23 @@ def create_date(message: Message) -> None:
                              text=text,
                              reply_markup=calendar)
         elif message.text.lower() == "нет":
-            text = "Попробуйте ввести другой город"
+            text = "Попробуйте ввести <b>другой</b> город"
 
             bot.set_state(user_id=message.from_user.id,
                           state=UserInfoState.city_name,
                           chat_id=message.chat.id)
             bot.send_message(chat_id=message.chat.id,
-                             text=text)
+                             text=text, parse_mode="html")
         else:
             raise Exception
     except Exception:
-        pass
+        bot.send_message(chat_id=message.chat.id,
+                         text="Требуется ответ Да/Нет", parse_mode="html",
+                         reply_markup=one_word_answer())
 
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func())
+@ex_log
 def create_date(call: CallbackQuery) -> None:
     date_lower_limit = date.today()
 
@@ -152,7 +165,7 @@ def create_date(call: CallbackQuery) -> None:
 
 
 @bot.message_handler(state=UserInfoState.count_hotels)
-# @ex_wrapper
+@ex_log
 def count_hotel(message: Message) -> None:
     answer = f"<b>Выводить фотографии для каждого отеля?</b>"
 
@@ -168,7 +181,7 @@ def count_hotel(message: Message) -> None:
 
 
 @bot.message_handler(state=UserInfoState.need_photos)
-# @ex_wrapper
+@ex_log
 def print_photo(message: Message) -> None:
     if message.text.lower() == "да":
         with bot.retrieve_data(user_id=message.from_user.id,
@@ -191,7 +204,7 @@ def print_photo(message: Message) -> None:
 
 
 @bot.message_handler(state=UserInfoState.count_photos)
-# @ex_wrapper
+@ex_log
 def properties_list(message: Message) -> None:
     bot.send_message(chat_id=message.chat.id, text="Начинаю поиск отелей...",
                      parse_mode='html')
