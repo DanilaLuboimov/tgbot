@@ -302,7 +302,7 @@ def properties_list(message: Message) -> None:
 
         if hotel[5] == 1:
             nights = "ночь"
-        elif 2 <= hotel[5] >= 4:
+        elif 2 <= hotel[5] <= 4:
             nights = "ночи"
         else:
             nights = "ночей"
