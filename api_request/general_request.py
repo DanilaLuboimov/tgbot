@@ -6,6 +6,16 @@ import json
 
 
 def get_response(url: str, querystring: dict) -> dict:
+    """
+    Основная функция для отправки запросов к api.
+    Формирует json файл и возвращает его.
+
+    :param url: url запроса.
+    :type url: str
+    :param querystring: параметры запроса
+    :type querystring: dict
+    :return: list
+    """
     try:
         response = requests.get(url=url, headers=headers,
                                 params=querystring, timeout=17)

@@ -18,6 +18,14 @@ from database.create_new_results import new_results
 @bot.message_handler(state=UserInfoState.city_name)
 @ex_log
 def get_city_name(message: Message) -> None:
+    """
+    Обработчик определяет название города и его id,
+    по запросу пользователя и просит подтверждение
+
+    :param message: Сообщение от пользователя
+    :type message: Message
+    :return: None
+    """
     bot.send_message(chat_id=message.chat.id, text="Начинаю искать город...",
                      parse_mode="html")
 
@@ -47,38 +55,53 @@ def get_city_name(message: Message) -> None:
 @bot.message_handler(state=UserInfoState.check_in)
 @ex_log
 def create_date(message: Message) -> None:
-    try:
-        if message.text.lower() == "да":
+    """
+    Обработчик, при утвердительном ответе пользователя,
+    создает клавиатуру для ввода даты, иначе возвращается
+    к get_city_name
 
-            calendar, step = get_calendar(is_process=False,
-                                          current_date=date.today(),
-                                          min_date=date.today(),
-                                          locale="ru")
-            if LSTEP[step] == "year":
-                text = "Выберите год"
+    :param message: Сообщение от пользователя
+    :type message: Message
+    :return: None
+    """
+    if message.text.lower() == "да":
 
-            bot.send_message(chat_id=message.chat.id,
-                             text=text,
-                             reply_markup=calendar)
-        elif message.text.lower() == "нет":
-            text = "Попробуйте ввести <b>другой</b> город"
+        calendar, step = get_calendar(is_process=False,
+                                      current_date=date.today(),
+                                      min_date=date.today(),
+                                      locale="ru")
+        if LSTEP[step] == "year":
+            text = "Выберите год"
 
-            bot.set_state(user_id=message.from_user.id,
-                          state=UserInfoState.city_name,
-                          chat_id=message.chat.id)
-            bot.send_message(chat_id=message.chat.id,
-                             text=text, parse_mode="html")
-        else:
-            raise Exception
-    except Exception:
         bot.send_message(chat_id=message.chat.id,
-                         text="Требуется ответ Да/Нет", parse_mode="html",
+                         text=text,
+                         reply_markup=calendar)
+    elif message.text.lower() == "нет":
+        text = "Попробуйте ввести <b>другой</b> город"
+
+        bot.set_state(user_id=message.from_user.id,
+                      state=UserInfoState.city_name,
+                      chat_id=message.chat.id)
+        bot.send_message(chat_id=message.chat.id,
+                         text=text, parse_mode="html")
+    else:
+        bot.send_message(chat_id=message.chat.id,
+                         text="Требуется ответ <b><u>Да/Нет</u></b>",
+                         parse_mode="html",
                          reply_markup=one_word_answer())
 
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func())
 @ex_log
 def create_date(call: CallbackQuery) -> None:
+    """
+    Обработчик определяет даты въезда и выезда из отелей,
+    заданные пользователем с помощью встроенной клавиатуры
+
+    :param call: Запрос обратного вызова
+    :type call: CallbackQuery
+    :return:
+    """
     date_lower_limit = date.today()
 
     with bot.retrieve_data(user_id=call.from_user.id,
@@ -143,8 +166,8 @@ def create_date(call: CallbackQuery) -> None:
                 data["check_out"] = str(result)
 
                 if "price_min" not in data.keys():
-                    answer = "Введите минимальную цену, за ночь в отеле," \
-                             " в долларах"
+                    answer = "Введите <b><u>минимальную цену</u></b>," \
+                             " за ночь в отеле, в долларах"
 
                     bot.set_state(call.from_user.id,
                                   UserInfoState.price_min,
@@ -167,7 +190,15 @@ def create_date(call: CallbackQuery) -> None:
 @bot.message_handler(state=UserInfoState.count_hotels)
 @ex_log
 def count_hotel(message: Message) -> None:
-    answer = f"<b>Выводить фотографии для каждого отеля?</b>"
+    """
+    Обработчик устанавливает значение по количеству отелей в результате
+    выдаче пользователю
+
+    :param message: Сообщение от пользователя
+    :type message: Message
+    :return: None
+    """
+    answer = f"Выводить фотографии для каждого отеля?"
 
     with bot.retrieve_data(user_id=message.from_user.id,
                            chat_id=message.chat.id) as data:
@@ -183,6 +214,14 @@ def count_hotel(message: Message) -> None:
 @bot.message_handler(state=UserInfoState.need_photos)
 @ex_log
 def print_photo(message: Message) -> None:
+    """
+    Обработчик устанавливает значение о необходимости прикреплять
+    фотографии к результатам в выдаче пользователю
+
+    :param message: Сообщение от пользователя
+    :type message: Message
+    :return: None
+    """
     if message.text.lower() == "да":
         with bot.retrieve_data(user_id=message.from_user.id,
                                chat_id=message.chat.id) as data:
@@ -206,6 +245,14 @@ def print_photo(message: Message) -> None:
 @bot.message_handler(state=UserInfoState.count_photos)
 @ex_log
 def properties_list(message: Message) -> None:
+    """
+    Обработчик предоставляет пользователю результат поиска отелей
+    по заданным ранее параметрам
+
+    :param message: Сообщение от пользователя
+    :type message: Message
+    :return: None
+    """
     bot.send_message(chat_id=message.chat.id, text="Начинаю поиск отелей...",
                      parse_mode='html')
 
@@ -263,14 +310,14 @@ def properties_list(message: Message) -> None:
         answer = f"Название отеля: {hotel[0]}\n" \
                  f"Адрес: {hotel[3]}\n" \
                  f"{hotel[4]}\n" \
-                 f"Цена за {hotel[5]} {nights}: ${hotel[1]}"
+                 f"Цена за {hotel[5]} {nights}: <b>${hotel[1]}</b>"
 
         if nights != "ночь":
             hotel[1] = hotel[1].replace(",", "", 1)
             price = round(float(hotel[1]) / hotel[5], 2)
             if str(price).endswith(".0"):
                 price = str(price)[:-2:]
-            answer += f"\nЦена за ночь: ${price}"
+            answer += f"\nЦена за ночь: <b>${price}</b>"
 
         url = f"https://www.hotels.com/ho{hotel[2]}/?q-check-in={check_in}&q-check-out={check_out}&q-rooms=1&q-room-0-adults=1&q-room-0-children=0&f-hotel-id={hotel[2]}"
 

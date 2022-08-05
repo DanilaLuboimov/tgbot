@@ -2,6 +2,12 @@ from telebot.types import ReplyKeyboardMarkup
 
 
 def number_of_hotels() -> ReplyKeyboardMarkup:
+    """
+    Функция создает клавиатуру для определения количества
+    отелей в результате поиска
+
+    :return: ReplyKeyboardMarkup
+    """
     user_answer = ["1", "2", "3", "4", "5"]
 
     select_answer = ReplyKeyboardMarkup(

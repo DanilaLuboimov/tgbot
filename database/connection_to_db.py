@@ -4,6 +4,11 @@ import psycopg2
 
 
 def connect():
+    """
+    Функция для присоединения к базе данных в PostgreSQL
+
+    :return: Объект для работы с базой данных
+    """
     try:
         connection = psycopg2.connect(
             host=host,

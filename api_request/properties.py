@@ -8,7 +8,36 @@ def get_properties(city_id: str, check_in: str, check_out: str, price_min: str,
                    landmark_ids: str | None = None,
                    distance_min: float | None = None,
                    distance_max: float | None = None,
-                   ) -> dict:
+                   ) -> list:
+    """
+    Функция формирует список отелей, подходящий по заданным критериям.
+    Каждый элемент списка состоит из
+    (Название отеля, Полной стоимости за заданный период,
+    id отеля, Фактический адрес, Расстояние от центра города,
+    Количество ночей в заданном периоде)
+
+    :param city_id: id отеля
+    :type city_id: str
+    :param check_in: дата въезда
+    :type check_in: str
+    :param check_out: дата выезда
+    :type check_out: str
+    :param price_min: минимальная цена за ночь
+    :type price_min: str
+    :param price_max: максимальная цена за ночь
+    :type price_max: str
+    :param user_filter: фильтр для поиска отелей через api
+    :type user_filter: str
+    :param city_name: название города
+    :type city_name: str
+    :param landmark_ids: используется для проверки, как флаг
+    :type landmark_ids: [str, None]
+    :param distance_min: минимальная дистанция до центра города
+    :type distance_min: [float, None]
+    :param distance_max: максимальная дистанция до центра города
+    :type distance_max: [float, None]
+    :return: list
+    """
     url = "https://hotels4.p.rapidapi.com/properties/list"
     querystring = {
         "destinationId": city_id,

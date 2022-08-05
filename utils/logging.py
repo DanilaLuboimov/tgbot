@@ -5,6 +5,13 @@ from loguru import logger
 
 
 def ex_log(func: Callable) -> Callable:
+    """
+    Декоратор для логирования исключений в обработчиках
+
+    :param func: обработчик
+    :type func: Callable
+    :return: Callable
+    """
     logger.add("debug.log", format="\n{time} [{level}]\n{message}",
                level="DEBUG")
 

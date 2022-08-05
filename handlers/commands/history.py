@@ -9,24 +9,31 @@ from utils.logging import ex_log
 @bot.message_handler(commands=["history"])
 @ex_log
 def history(message: Message) -> None:
+    """
+    Функция отправляет пользователю сообщения с его историей
+
+    :param message: Сообщение от пользователя
+    :type message: Message
+    :return: None
+    """
     db_search_list = get_search_query(user_id=message.from_user.id)
 
     if len(db_search_list) == 0:
-        answer = f"Вы еще ничего не искали"
+        answer = f"Вы еще <u>ничего</u> не искали!"
         bot.send_message(message.chat.id, answer, parse_mode='html',
                          reply_markup=user_keyboard())
     else:
-        answer = f"История поиска отелей:"
+        answer = f"<b>История поиска отелей:</b>"
         bot.send_message(message.chat.id, answer, parse_mode='html')
 
         for query in db_search_list:
-            history_answer = f"Вы использовали команду: {query[0]}\n" \
-                             f"Дата и время поиска: {query[1]}"
+            history_answer = f"Вы использовали команду: <u>{query[0]}</u>\n" \
+                             f"Дата и время поиска: <b>{query[1]}</b>"
             result = get_history_result(user_id=message.from_user.id,
                                         search_id=query[2])
 
             if result[0][0] is None:
-                history_answer += f"\nПоиск не дал результатов"
+                history_answer += f"\n<b>Поиск не дал результатов</b>"
                 bot.send_message(message.chat.id, history_answer,
                                  parse_mode='html')
             else:
@@ -34,6 +41,6 @@ def history(message: Message) -> None:
                                  parse_mode='html',
                                  reply_markup=hotel_website(result))
 
-        answer = f"Это вся ваша история поиска"
+        answer = f"<b>Это вся ваша история поиска</b>"
         bot.send_message(message.chat.id, answer, parse_mode='html',
                          reply_markup=user_keyboard())

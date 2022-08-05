@@ -2,7 +2,13 @@ from .connection_to_db import connect
 
 
 def get_tables() -> None:
+    """
+    Функция создает таблицы в базе данных, если они отсутствуют.
+
+    :return: None
+    """
     connection = connect()
+
     with connection.cursor() as cursor:
         cursor.execute(
             """

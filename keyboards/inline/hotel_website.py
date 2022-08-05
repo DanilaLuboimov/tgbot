@@ -2,6 +2,13 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
 def hotel_website(hotels: list) -> InlineKeyboardMarkup:
+    """
+    Функция создает встроенную клавиатуру с ссылками отелей
+
+    :param hotels: Элементы (url отеля, название отеля)
+    :type hotels: list
+    :return: InlineKeyboardMarkup
+    """
     markup = InlineKeyboardMarkup()
 
     for button in hotels:

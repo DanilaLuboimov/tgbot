@@ -3,7 +3,18 @@ from calendar import monthrange
 from datetime import date, timedelta
 
 
-def get_calendar(is_process=False, callback_data=None, **kwargs):
+def get_calendar(is_process=False, callback_data=None, **kwargs) -> tuple:
+    """
+    Функция создает новый календарь
+
+    :param is_process: флаг
+    :type is_process: bool
+    :param callback_data: Данные обратного вызова
+    :type callback_data: dict
+    :param kwargs: именованные аргументы
+    :type kwargs: dict
+    :return: tuple
+    """
     date_upper_limit = date.today()
 
     for _ in range(3):

@@ -7,6 +7,14 @@ from utils.logging import ex_log
 @bot.message_handler(commands=["lowprice"])
 @ex_log
 def lowprice(message: Message) -> None:
+    """
+    Функция запускает череду обработчиков для поиска
+    "Самой низкой цены за ночь в отеле"
+
+    :param message: Сообщение от пользователя
+    :type message: Message
+    :return: None
+    """
     bot.delete_state(user_id=message.from_user.id, chat_id=message.chat.id)
 
     answer = f"В какой <b>город</b> отправляемся?"

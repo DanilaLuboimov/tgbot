@@ -2,7 +2,16 @@ from .connection_to_db import connect
 
 
 def new_user(user_id: int) -> bool:
+    """
+    Функция проверяет наличие пользователя в базе данных.
+    Если запись о нем отсутствует, создает новую.
+
+    :param user_id: id пользователя
+    :type user_id: int
+    :return: bool
+    """
     connection = connect()
+
     with connection.cursor() as cursor:
         cursor.execute(
             """SELECT user_id FROM users"""
